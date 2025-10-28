@@ -20,10 +20,17 @@ export class EmailParser {
     try {
       const parsed: ParsedMail = await simpleParser(rawEmail);
 
+      // Helper function to extract text from AddressObject
+      const getAddressText = (addr: any): string => {
+        if (!addr) return '';
+        if (Array.isArray(addr)) return addr[0]?.text || '';
+        return (addr as any).text || '';
+      };
+
       return {
         messageId: parsed.messageId || '',
-        from: Array.isArray(parsed.from) ? parsed.from[0]?.text || '' : parsed.from?.text || '',
-        to: Array.isArray(parsed.to) ? parsed.to[0]?.text || '' : parsed.to?.text || '',
+        from: getAddressText(parsed.from),
+        to: getAddressText(parsed.to),
         subject: parsed.subject || '',
         body: parsed.text || '',
         html: parsed.html || undefined,
