@@ -22,8 +22,8 @@ export class EmailParser {
 
       return {
         messageId: parsed.messageId || '',
-        from: parsed.from?.text || '',
-        to: parsed.to?.text || '',
+        from: Array.isArray(parsed.from) ? parsed.from[0]?.text || '' : parsed.from?.text || '',
+        to: Array.isArray(parsed.to) ? parsed.to[0]?.text || '' : parsed.to?.text || '',
         subject: parsed.subject || '',
         body: parsed.text || '',
         html: parsed.html || undefined,
