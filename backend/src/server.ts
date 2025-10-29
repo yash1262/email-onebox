@@ -16,22 +16,33 @@ async function initialize() {
   try {
     Logger.info('🚀 Initializing Email Onebox application...');
 
-    // Initialize Elasticsearch
-    Logger.info('📊 Setting up Elasticsearch...');
-    await createEmailIndex();
+    // Initialize Elasticsearch (optional)
+    try {
+      Logger.info('📊 Setting up Elasticsearch...');
+      await createEmailIndex();
+    } catch (error) {
+      Logger.warn('⚠️  Elasticsearch not available, continuing without it...');
+    }
 
-    // Initialize Vector DB
-    Logger.info('🧠 Setting up Vector DB...');
-    await initializeVectorDB();
-    await storeProductContext();
+    // Initialize Vector DB (optional)
+    try {
+      Logger.info('🧠 Setting up Vector DB...');
+      await initializeVectorDB();
+      await storeProductContext();
+    } catch (error) {
+      Logger.warn('⚠️  Vector DB not available, continuing without it...');
+    }
 
-    // Initialize Sync Manager
-    Logger.info('📧 Connecting to email accounts...');
-    syncManager = new SyncManager();
-    await syncManager.initialize(emailAccounts);
-
-    // Start periodic sync (backup to IDLE)
-    syncManager.startPeriodicSync(5);
+    // Initialize Sync Manager (optional)
+    try {
+      Logger.info('📧 Connecting to email accounts...');
+      syncManager = new SyncManager();
+      await syncManager.initialize(emailAccounts);
+      // Start periodic sync (backup to IDLE)
+      syncManager.startPeriodicSync(5);
+    } catch (error) {
+      Logger.warn('⚠️  Email sync not available, continuing without it...');
+    }
 
     Logger.info('✅ Application initialized successfully!');
   } catch (error) {
