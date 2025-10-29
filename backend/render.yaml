@@ -2,7 +2,7 @@ services:
   - type: web
     name: email-onebox-backend
     runtime: node
-    buildCommand: npm install --production=false
+    buildCommand: npm install && npm run build
     startCommand: npm start
     envVars:
       - key: NODE_ENV
