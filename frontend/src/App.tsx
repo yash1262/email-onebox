@@ -16,13 +16,18 @@ const queryClient = new QueryClient({
 });
 
 const App: React.FC = () => {
+  React.useEffect(() => {
+    console.log('App mounted');
+  }, []);
+
   return (
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
-        <BrowserRouter>
+        <BrowserRouter basename="/">
           <Layout>
             <Routes>
               <Route path="/" element={<HomePage />} />
+              <Route path="/*" element={<HomePage />} />
             </Routes>
           </Layout>
         </BrowserRouter>
