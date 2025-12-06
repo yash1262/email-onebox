@@ -5,56 +5,145 @@ import { useEmails } from '../../hooks/useEmails';
 import { useEmailStore } from '../../store/emailStore';
 import { useAccountStore } from '../../store/accountStore';
 import { useUiStore } from '../../store/uiStore';
+import { Email, Category } from '../../types/email.types';
+
+// Demo emails for when API is not available
+const DEMO_EMAILS: Email[] = [
+  {
+    id: '1',
+    messageId: 'demo-1',
+    accountEmail: 'demo@example.com',
+    from: 'noreply@email-onebox.com',
+    to: 'you@example.com',
+    subject: 'Welcome to Email Onebox - Demo Mode',
+    body: 'This is a demo email. The backend API is not currently running. In production, real emails from your Gmail, Outlook, and other accounts would appear here.',
+    date: new Date().toISOString(),
+    folder: 'INBOX',
+    uid: 1,
+    flags: [],
+    timestamp: new Date().toISOString(),
+    category: Category.INTERESTED
+  },
+  {
+    id: '2',
+    messageId: 'demo-2',
+    accountEmail: 'demo@example.com',
+    from: 'demo@email-onebox.com',
+    to: 'you@example.com',
+    subject: 'AI-Powered Email Organization',
+    body: 'Email Onebox uses AI to automatically categorize, organize, and help you respond to emails. Select emails to see the full interface.',
+    date: new Date(Date.now() - 3600000).toISOString(),
+    folder: 'INBOX',
+    uid: 2,
+    flags: ['\\Starred'],
+    timestamp: new Date(Date.now() - 3600000).toISOString(),
+    category: Category.INTERESTED
+  },
+  {
+    id: '3',
+    messageId: 'demo-3',
+    accountEmail: 'demo@example.com',
+    from: 'demo@email-onebox.com',
+    to: 'you@example.com',
+    subject: 'Features Overview',
+    body: 'Features include: Email aggregation from multiple accounts, AI categorization, intelligent replies, full-text search, and beautiful UI.',
+    date: new Date(Date.now() - 7200000).toISOString(),
+    folder: 'INBOX',
+    uid: 3,
+    flags: [],
+    timestamp: new Date(Date.now() - 7200000).toISOString(),
+    category: Category.UNCATEGORIZED
+  }
+];
 
 export const EmailList: React.FC = () => {
-  const { selectedAccount } = useAccountStore();
-  const { selectedFolder, selectedCategory, searchQuery } = useUiStore();
-  const { emails, selectedEmail, setSelectedEmail, isLoading: storeLoading, error: storeError } = useEmailStore();
+  try {
+    const { selectedAccount } = useAccountStore();
+    const { selectedFolder, selectedCategory, searchQuery } = useUiStore();
+    const { emails, selectedEmail, setSelectedEmail, isLoading: storeLoading, error: storeError } = useEmailStore();
 
-  const { isLoading: queryLoading, error: queryError } = useEmails({
-    accountEmail: selectedAccount || undefined,
-    folder: selectedFolder || undefined,
-    category: selectedCategory || undefined
-  });
+    const { isLoading: queryLoading, error: queryError } = useEmails({
+      accountEmail: selectedAccount || undefined,
+      folder: selectedFolder || undefined,
+      category: selectedCategory || undefined
+    });
 
-  const isLoading = queryLoading || storeLoading;
-  const error = queryError || storeError;
+    const isLoading = queryLoading || storeLoading;
+    const error = queryError || storeError;
 
-  // Filter emails based on search query
-  const filteredEmails = React.useMemo(() => {
-    if (!searchQuery || searchQuery.trim() === '') {
-      return emails;
+    // Use demo emails if there's an error or no emails, otherwise use real emails
+    const emailsToDisplay = (error || !emails || emails.length === 0) ? DEMO_EMAILS : emails;
+
+    // Filter emails based on search query
+    const filteredEmails = React.useMemo(() => {
+      if (!searchQuery || searchQuery.trim() === '') {
+        return emailsToDisplay;
+      }
+      
+      const query = searchQuery.toLowerCase();
+      return emailsToDisplay.filter(email => 
+        email.subject?.toLowerCase().includes(query) ||
+        email.from?.toLowerCase().includes(query) ||
+        email.body?.toLowerCase().includes(query) ||
+        email.to?.toLowerCase().includes(query)
+      );
+    }, [emailsToDisplay, searchQuery]);
+
+    if (isLoading && !error) {
+      return (
+        <div className="flex items-center justify-center h-full">
+          <Loader size="lg" />
+        </div>
+      );
     }
-    
-    const query = searchQuery.toLowerCase();
-    return emails.filter(email => 
-      email.subject?.toLowerCase().includes(query) ||
-      email.from?.toLowerCase().includes(query) ||
-      email.body?.toLowerCase().includes(query) ||
-      email.to?.toLowerCase().includes(query)
-    );
-  }, [emails, searchQuery]);
 
-  if (isLoading) {
+    if (!filteredEmails || filteredEmails.length === 0) {
+      return (
+        <div className="flex items-center justify-center h-full p-8">
+          <div className="text-center max-w-sm">
+            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
+              <span className="text-2xl">📭</span>
+            </div>
+            <p className="text-gray-700 text-base font-semibold mb-2">
+              {searchQuery ? 'No emails match your search' : 'No emails found'}
+            </p>
+            <p className="text-gray-500 text-sm mb-5 leading-relaxed">
+              {searchQuery ? 'Try a different search term' : 'Try adjusting your filters or syncing your accounts'}
+            </p>
+          </div>
+        </div>
+      );
+    }
+
     return (
-      <div className="flex items-center justify-center h-full">
-        <Loader size="lg" />
+      <div className="divide-y divide-gray-100/80">
+        {filteredEmails.map((email) => (
+          <EmailItem
+            key={email.id}
+            email={email}
+            isSelected={selectedEmail?.id === email.id}
+            onClick={() => setSelectedEmail(email)}
+          />
+        ))}
       </div>
     );
-  }
-
-  if (error) {
+  } catch (error) {
+    console.error('EmailList error:', error);
     return (
       <div className="flex items-center justify-center h-full p-8">
-        <div className="text-center max-w-md">
-          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-red-50 flex items-center justify-center">
+        <div className="text-center max-w-sm">
+          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-yellow-50 flex items-center justify-center">
             <span className="text-2xl">⚠️</span>
           </div>
-          <p className="text-red-600 font-semibold mb-2 text-base">Error loading emails</p>
-          <p className="text-gray-600 text-sm mb-5 leading-relaxed">{error.toString()}</p>
+          <p className="text-gray-700 text-base font-semibold mb-2">
+            Error loading emails
+          </p>
+          <p className="text-gray-500 text-sm mb-5 leading-relaxed">
+            There was an issue loading your emails. The app is in demo mode showing sample emails.
+          </p>
           <button
             onClick={() => window.location.reload()}
-            className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-all shadow-medium text-sm font-semibold"
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all text-sm font-semibold"
           >
             Retry
           </button>
@@ -62,43 +151,4 @@ export const EmailList: React.FC = () => {
       </div>
     );
   }
-
-  if (!filteredEmails || filteredEmails.length === 0) {
-    return (
-      <div className="flex items-center justify-center h-full p-8">
-        <div className="text-center max-w-sm">
-          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
-            <span className="text-2xl">📭</span>
-          </div>
-          <p className="text-gray-700 text-base font-semibold mb-2">
-            {searchQuery ? 'No emails match your search' : 'No emails found'}
-          </p>
-          <p className="text-gray-500 text-sm mb-5 leading-relaxed">
-            {searchQuery ? 'Try a different search term' : 'Try adjusting your filters or syncing your accounts'}
-          </p>
-          {!searchQuery && (
-            <button
-              onClick={() => window.location.reload()}
-              className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-all shadow-medium text-sm font-semibold"
-            >
-              Refresh
-            </button>
-          )}
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="divide-y divide-gray-100/80">
-      {filteredEmails.map((email) => (
-        <EmailItem
-          key={email.id}
-          email={email}
-          isSelected={selectedEmail?.id === email.id}
-          onClick={() => setSelectedEmail(email)}
-        />
-      ))}
-    </div>
-  );
 };
