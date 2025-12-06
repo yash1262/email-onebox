@@ -4,15 +4,13 @@
   "outputDirectory": "frontend/dist",
   "installCommand": "npm install && cd backend && npm install && cd ../frontend && npm install",
   "env": {
-    "BACKEND_URL": {
-      "description": "Backend API URL for production. Leave empty to use http://localhost:3000 (for local backend)",
-      "default": "http://localhost:3000"
-    }
+    "NODE_ENV": "production",
+    "LOG_LEVEL": "info"
   },
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "api/index.ts"
+      "dest": "/api/backend.ts"
     },
     {
       "src": "/assets/(.*)",

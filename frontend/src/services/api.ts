@@ -7,13 +7,8 @@ const getApiUrl = () => {
     return import.meta.env.VITE_API_URL;
   }
   
-  // In production (Vercel), use relative /api path for serverless functions
-  if (import.meta.env.PROD) {
-    return '/api';
-  }
-  
-  // In development, use localhost
-  return 'http://localhost:3000/api';
+  // Use relative /api path (works for both localhost and Vercel)
+  return '/api';
 };
 
 const api = axios.create({
