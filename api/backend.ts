@@ -1,63 +1,77 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import dotenv from 'dotenv';
+import type { Express } from 'express';
 
-dotenv.config();
+let app: Express | null = null;
 
-// Load the Express app
-import app from '../backend/src/app';
-
-// Initialize backend services on cold start
-let initialized = false;
-
-async function initializeBackend() {
-  if (initialized) return;
+async function getApp(): Promise<Express> {
+  if (app) return app;
   
-  try {
-    const { createEmailIndex } = await import('../backend/src/config/database');
-    const { SyncManager } = await import('../backend/src/services/sync/SyncManager');
-    const { emailAccounts } = await import('../backend/src/config/email');
-    const { initializeVectorDB, storeProductContext } = await import('../backend/src/config/vector-db');
-    const { Logger } = await import('../backend/src/utils/logger');
+  // Load the Express app synchronously
+  const express = await import('express').then(m => m.default);
+  const cors = await import('cors').then(m => m.default);
+  const helmet = await import('helmet').then(m => m.default);
+  
+  app = express();
 
-    Logger.info('🚀 Initializing backend services on Vercel...');
+  // Security middleware
+  app.use(helmet());
 
-    try {
-      Logger.info('📊 Setting up Elasticsearch...');
-      await createEmailIndex();
-    } catch (error) {
-      Logger.warn('⚠️  Elasticsearch not available');
-    }
+  // CORS
+  app.use(cors({
+    origin: [
+      'http://localhost:5173',
+      'http://localhost:5174',
+      'https://email-onebox-main.vercel.app',
+      'https://email-onebox-frontend.vercel.app',
+      process.env.FRONTEND_URL || 'http://localhost:5173'
+    ],
+    credentials: true
+  }));
 
-    try {
-      Logger.info('🧠 Setting up Vector DB...');
-      await initializeVectorDB();
-      await storeProductContext();
-    } catch (error) {
-      Logger.warn('⚠️  Vector DB not available');
-    }
+  // Body parser
+  app.use(express.json());
+  app.use(express.urlencoded({ extended: true }));
 
-    try {
-      Logger.info('📧 Connecting to email accounts...');
-      const syncManager = new SyncManager();
-      await syncManager.initialize(emailAccounts);
-      syncManager.startPeriodicSync(5);
-    } catch (error) {
-      Logger.warn('⚠️  Email sync not available');
-    }
+  // Health check
+  app.get('/health', (_req, res) => {
+    res.json({
+      success: true,
+      status: 'healthy',
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime()
+    });
+  });
 
-    Logger.info('✅ Backend services initialized!');
-    initialized = true;
-  } catch (error) {
-    console.error('Initialization error:', error);
-  }
+  // API routes - import the routes
+  const { default: routes } = await import('../backend/src/routes/index.js');
+  app.use('/api', routes);
+
+  // 404 handler
+  app.use((req, res) => {
+    res.status(404).json({
+      success: false,
+      error: 'Not Found',
+      path: req.path,
+      method: req.method
+    });
+  });
+
+  return app;
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  // Initialize on first request
-  if (!initialized) {
-    await initializeBackend();
+  try {
+    const application = await getApp();
+    return application(req, res);
+  } catch (error) {
+    console.error('Backend error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Backend service error',
+      message: error instanceof Error ? error.message : 'Unknown error'
+    });
   }
-
-  // Forward to Express app
-  return app(req, res);
 }
+
+
+
