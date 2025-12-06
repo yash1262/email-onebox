@@ -2,12 +2,12 @@ import axios from 'axios';
 
 // Determine API URL based on environment
 const getApiUrl = () => {
-  // Check for explicit env variable
+  // Check for explicit env variable first
   if (import.meta.env.VITE_API_URL) {
     return import.meta.env.VITE_API_URL;
   }
   
-  // Use relative /api path (works for both localhost and Vercel)
+  // Use relative /api path (works for localhost, Vercel proxy, and serverless)
   return '/api';
 };
 

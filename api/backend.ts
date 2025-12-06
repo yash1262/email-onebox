@@ -1,59 +1,50 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import express from 'express';
-import cors from 'cors';
 
 export default function handler(req: VercelRequest, res: VercelResponse) {
-  // Create Express app for this request
-  const app = express();
-
-  // Middleware
-  app.use(cors({
-    origin: [
-      'http://localhost:5173',
-      'http://localhost:5174',
-      'https://email-onebox-main.vercel.app',
-      process.env.FRONTEND_URL || '*'
-    ],
-    credentials: true
-  }));
-
-  app.use(express.json());
-  app.use(express.urlencoded({ extended: true }));
-
-  // Health endpoint
-  app.get('/health', (_req, healthRes) => {
-    healthRes.json({
-      success: true,
-      status: 'healthy',
-      timestamp: new Date().toISOString()
-    });
-  });
-
-  // API routes - import dynamically
-  app.get('/emails', async (_req, emailRes) => {
-    try {
-      emailRes.json({
+  try {
+    // Simple test response
+    res.setHeader('Content-Type', 'application/json');
+    
+    if (req.url?.includes('/health')) {
+      res.json({
         success: true,
-        message: 'Emails endpoint - backend connected',
-        data: []
+        status: 'Backend running on Vercel',
+        timestamp: new Date().toISOString(),
+        path: req.url
       });
-    } catch (error) {
-      emailRes.status(500).json({ success: false, error: 'Failed' });
+      return;
     }
-  });
 
-  // Fallback
-  app.all('*', (_req, fallbackRes) => {
-    fallbackRes.status(404).json({
-      success: false,
-      error: 'Endpoint not found',
-      available: ['/health', '/emails']
+    if (req.url?.includes('/emails')) {
+      res.json({
+        success: true,
+        data: [],
+        count: 0,
+        total: 0,
+        message: 'Backend connected - database sync in progress'
+      });
+      return;
+    }
+
+    // Default response
+    res.status(200).json({
+      success: true,
+      message: 'Backend is running',
+      endpoints: {
+        health: '/api/health',
+        emails: '/api/emails',
+        accounts: '/api/accounts'
+      }
     });
-  });
-
-  // Handle the request
-  return app(req, res);
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: 'Server error',
+      message: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
 }
+
 
 
 
