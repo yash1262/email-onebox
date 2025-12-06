@@ -6,55 +6,13 @@ import { useEmailStore } from '../../store/emailStore';
 import { useAccountStore } from '../../store/accountStore';
 import { useUiStore } from '../../store/uiStore';
 import { Email, Category } from '../../types/email.types';
+import { DEMO_EMAILS_ENHANCED } from '../../config/demoEmails';
 
 // Demo emails for when API is not available
-const DEMO_EMAILS: Email[] = [
-  {
-    id: '1',
-    messageId: 'demo-1',
-    accountEmail: 'demo@example.com',
-    from: 'noreply@email-onebox.com',
-    to: 'you@example.com',
-    subject: 'Welcome to Email Onebox - Demo Mode',
-    body: 'This is a demo email. The backend API is not currently running. In production, real emails from your Gmail, Outlook, and other accounts would appear here.',
-    date: new Date().toISOString(),
-    folder: 'INBOX',
-    uid: 1,
-    flags: [],
-    timestamp: new Date().toISOString(),
-    category: Category.INTERESTED
-  },
-  {
-    id: '2',
-    messageId: 'demo-2',
-    accountEmail: 'demo@example.com',
-    from: 'demo@email-onebox.com',
-    to: 'you@example.com',
-    subject: 'AI-Powered Email Organization',
-    body: 'Email Onebox uses AI to automatically categorize, organize, and help you respond to emails. Select emails to see the full interface.',
-    date: new Date(Date.now() - 3600000).toISOString(),
-    folder: 'INBOX',
-    uid: 2,
-    flags: ['\\Starred'],
-    timestamp: new Date(Date.now() - 3600000).toISOString(),
-    category: Category.INTERESTED
-  },
-  {
-    id: '3',
-    messageId: 'demo-3',
-    accountEmail: 'demo@example.com',
-    from: 'demo@email-onebox.com',
-    to: 'you@example.com',
-    subject: 'Features Overview',
-    body: 'Features include: Email aggregation from multiple accounts, AI categorization, intelligent replies, full-text search, and beautiful UI.',
-    date: new Date(Date.now() - 7200000).toISOString(),
-    folder: 'INBOX',
-    uid: 3,
-    flags: [],
-    timestamp: new Date(Date.now() - 7200000).toISOString(),
-    category: Category.UNCATEGORIZED
-  }
-];
+const DEMO_EMAILS: Email[] = DEMO_EMAILS_ENHANCED.map((email: any) => ({
+  ...email,
+  category: email.category as Category
+}));
 
 export const EmailList: React.FC = () => {
   try {
