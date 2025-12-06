@@ -51,10 +51,19 @@ async function initialize() {
   }
 }
 
-// Start server
-app.listen(PORT, async () => {
+// Start server with error handling
+const server = app.listen(PORT, async () => {
   Logger.info(`🌐 Server running on http://localhost:${PORT}`);
   await initialize();
+});
+
+// Handle port already in use
+server.on('error', (err: any) => {
+  if (err.code === 'EADDRINUSE') {
+    Logger.error(`Port ${PORT} is already in use. Please free up the port or change PORT env variable.`);
+    process.exit(1);
+  }
+  throw err;
 });
 
 // Graceful shutdown

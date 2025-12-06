@@ -29,7 +29,8 @@
     "clean": "npm run docker:clean && rm -rf node_modules backend/node_modules frontend/node_modules"
   },
   "devDependencies": {
-    "concurrently": "^8.2.2"
+    "concurrently": "^8.2.2",
+    "@vercel/node": "^3.0.0"
   },
   "keywords": [
     "email",
