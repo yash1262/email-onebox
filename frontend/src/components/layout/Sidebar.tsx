@@ -7,22 +7,23 @@ import { useEmailStats } from '../../hooks/useEmails';
 import { Category, CATEGORY_COLORS } from '../../types/email.types';
 
 export const Sidebar: React.FC = () => {
-  const { data: accounts } = useAccounts();
-  const { data: stats } = useEmailStats();
-  const { sidebarOpen, selectedFolder, selectedCategory, setSelectedFolder, setSelectedCategory } = useUiStore();
-  const { selectedAccount, setSelectedAccount } = useAccountStore();
+  try {
+    const { data: accounts = [] } = useAccounts() || { data: [] };
+    const { data: stats } = useEmailStats() || { data: undefined };
+    const { sidebarOpen, selectedFolder, selectedCategory, setSelectedFolder, setSelectedCategory } = useUiStore();
+    const { selectedAccount, setSelectedAccount } = useAccountStore();
 
-  const folders = [
-    { name: 'INBOX', icon: Inbox, label: 'Inbox' },
-    { name: 'SENT', icon: Send, label: 'Sent' },
-    { name: 'STARRED', icon: Star, label: 'Starred' },
-    { name: 'TRASH', icon: Trash2, label: 'Trash' },
-    { name: 'ARCHIVE', icon: Archive, label: 'Archive' }
-  ];
+    const folders = [
+      { name: 'INBOX', icon: Inbox, label: 'Inbox' },
+      { name: 'SENT', icon: Send, label: 'Sent' },
+      { name: 'STARRED', icon: Star, label: 'Starred' },
+      { name: 'TRASH', icon: Trash2, label: 'Trash' },
+      { name: 'ARCHIVE', icon: Archive, label: 'Archive' }
+    ];
 
-  const categories = Object.values(Category);
+    const categories = Object.values(Category);
 
-  if (!sidebarOpen) return null;
+    if (!sidebarOpen) return null;
 
   return (
     <aside className="w-64 bg-white border-r border-gray-200/80 flex flex-col overflow-hidden shadow-soft">
@@ -145,5 +146,20 @@ export const Sidebar: React.FC = () => {
         </div>
       </div>
     </aside>
-  );
+    );
+  } catch (error) {
+    console.error('Sidebar error:', error);
+    return (
+      <aside className="w-64 bg-white border-r border-gray-200/80 flex flex-col overflow-hidden shadow-soft">
+        <div className="px-6 py-6 border-b border-gray-200/80">
+          <h1 className="text-xl font-bold text-gray-900">OneBox</h1>
+        </div>
+        <div className="flex-1 flex items-center justify-center p-4">
+          <div className="text-center text-sm text-gray-500">
+            <p>Unable to load sidebar</p>
+          </div>
+        </div>
+      </aside>
+    );
+  }
 };

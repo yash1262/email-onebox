@@ -1,7 +1,23 @@
 import axios from 'axios';
 
+// Determine API URL based on environment
+const getApiUrl = () => {
+  // Check for explicit env variable
+  if (import.meta.env.VITE_API_URL) {
+    return import.meta.env.VITE_API_URL;
+  }
+  
+  // In production (Vercel), use relative /api path for serverless functions
+  if (import.meta.env.PROD) {
+    return '/api';
+  }
+  
+  // In development, use localhost
+  return 'http://localhost:3000/api';
+};
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3000/api',
+  baseURL: getApiUrl(),
   headers: {
     'Content-Type': 'application/json',
     'ngrok-skip-browser-warning': 'true'

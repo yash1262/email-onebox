@@ -6,20 +6,21 @@ import { useUiStore } from '../../store/uiStore';
 import { useEmails } from '../../hooks/useEmails';
 
 export const Header: React.FC = () => {
-  const { toggleSidebar, setSearchQuery, searchQuery } = useUiStore();
-  const { refetch } = useEmails();
-  const [localQuery, setLocalQuery] = useState(searchQuery);
+  try {
+    const { toggleSidebar, setSearchQuery, searchQuery } = useUiStore();
+    const { refetch } = useEmails() || { refetch: () => {} };
+    const [localQuery, setLocalQuery] = useState(searchQuery || '');
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    setSearchQuery(localQuery);
-    // Trigger email refetch with search query
-    refetch();
-  };
+    const handleSearch = (e: React.FormEvent) => {
+      e.preventDefault();
+      setSearchQuery(localQuery);
+      // Trigger email refetch with search query
+      refetch?.();
+    };
 
-  const handleRefresh = () => {
-    refetch();
-  };
+    const handleRefresh = () => {
+      refetch?.();
+    };
 
   return (
     <header className="bg-white/95 backdrop-blur-md border-b border-gray-200/60 sticky top-0 z-30 shadow-sm">
@@ -74,5 +75,15 @@ export const Header: React.FC = () => {
         </div>
       </div>
     </header>
-  );
+    );
+  } catch (error) {
+    console.error('Header error:', error);
+    return (
+      <header className="bg-white border-b border-gray-200/60 sticky top-0 z-30">
+        <div className="px-6 py-4 text-sm text-gray-500">
+          Unable to load header
+        </div>
+      </header>
+    );
+  }
 };
