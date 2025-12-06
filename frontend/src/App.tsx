@@ -3,6 +3,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Layout } from './components/layout/Layout';
 import { HomePage } from './pages/HomePage';
 
+console.log('App.tsx loading');
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -14,6 +16,7 @@ const queryClient = new QueryClient({
 });
 
 const App: React.FC = () => {
+  console.log('App component rendering');
   return (
     <QueryClientProvider client={queryClient}>
       <Layout>
