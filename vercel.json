@@ -9,11 +9,11 @@
   "routes": [
     {
       "src": "/api/(.*)",
-      "destination": "api/index.ts"
+      "dest": "api/index.ts"
     },
     {
       "src": "/(.*)",
-      "destination": "/index.html"
+      "dest": "/index.html"
     }
   ],
   "functions": {
