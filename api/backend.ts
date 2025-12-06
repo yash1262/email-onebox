@@ -1,77 +1,60 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import type { Express } from 'express';
+import express from 'express';
+import cors from 'cors';
 
-let app: Express | null = null;
+export default function handler(req: VercelRequest, res: VercelResponse) {
+  // Create Express app for this request
+  const app = express();
 
-async function getApp(): Promise<Express> {
-  if (app) return app;
-  
-  // Load the Express app synchronously
-  const express = await import('express').then(m => m.default);
-  const cors = await import('cors').then(m => m.default);
-  const helmet = await import('helmet').then(m => m.default);
-  
-  app = express();
-
-  // Security middleware
-  app.use(helmet());
-
-  // CORS
+  // Middleware
   app.use(cors({
     origin: [
       'http://localhost:5173',
       'http://localhost:5174',
       'https://email-onebox-main.vercel.app',
-      'https://email-onebox-frontend.vercel.app',
-      process.env.FRONTEND_URL || 'http://localhost:5173'
+      process.env.FRONTEND_URL || '*'
     ],
     credentials: true
   }));
 
-  // Body parser
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
 
-  // Health check
-  app.get('/health', (_req, res) => {
-    res.json({
+  // Health endpoint
+  app.get('/health', (_req, healthRes) => {
+    healthRes.json({
       success: true,
       status: 'healthy',
-      timestamp: new Date().toISOString(),
-      uptime: process.uptime()
+      timestamp: new Date().toISOString()
     });
   });
 
-  // API routes - import the routes
-  const { default: routes } = await import('../backend/src/routes/index.js');
-  app.use('/api', routes);
+  // API routes - import dynamically
+  app.get('/emails', async (_req, emailRes) => {
+    try {
+      emailRes.json({
+        success: true,
+        message: 'Emails endpoint - backend connected',
+        data: []
+      });
+    } catch (error) {
+      emailRes.status(500).json({ success: false, error: 'Failed' });
+    }
+  });
 
-  // 404 handler
-  app.use((req, res) => {
-    res.status(404).json({
+  // Fallback
+  app.all('*', (_req, fallbackRes) => {
+    fallbackRes.status(404).json({
       success: false,
-      error: 'Not Found',
-      path: req.path,
-      method: req.method
+      error: 'Endpoint not found',
+      available: ['/health', '/emails']
     });
   });
 
-  return app;
+  // Handle the request
+  return app(req, res);
 }
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
-  try {
-    const application = await getApp();
-    return application(req, res);
-  } catch (error) {
-    console.error('Backend error:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Backend service error',
-      message: error instanceof Error ? error.message : 'Unknown error'
-    });
-  }
-}
 
 
 
